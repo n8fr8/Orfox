@@ -37,7 +37,6 @@ export TZ=UTC
 TIMESTAMP=`printf '@%(%Y-%m-%d %H:%M:%S)T x0.05' \
     $(git log -n1 --format=format:%at)`
 
-
 git reset --hard
 git clean -fdx
 git submodule foreach --recursive git reset --hard
@@ -54,11 +53,12 @@ cat external/tor-browser/.mozconfig-orfox >> $MOZCONFIG
 # switch to gecko dev and build
 cd external/tor-browser
 ./mach configure
-./mach build
 
 # Need to add in add-ons before the package step
 mkdir -p obj-tbb-arm-linux-androideabi/dist/bin/distribution/extensions/
 cp -r ../orfox-addons/* obj-tbb-arm-linux-androideabi/dist/bin/distribution/extensions/
+
+./mach build
 
 # set the version, the official Mozilla so far has been too hard to figure out...
 export versionName="Fennec-38.1.0esr/TorBrowser-5.0/Orfox-1.0beta2"
