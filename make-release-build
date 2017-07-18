@@ -60,8 +60,9 @@ cd external/tor-browser
 
 # set the version, the official Mozilla so far has been too hard to figure out...
 
-export versionName="Fennec-45.5.1esr/TorBrowser-6.5-1/Orfox-1.3-alpha1"
-export versionCode="5"
+#52.2.0esr-7.5-1
+export versionName="Fennec-52.2.0esr/TorBrowser-7.5-1/Orfox-1.4-beta1"
+export versionCode="6"
 sed -i "s,versionName=\"[^\"]*\",versionName=\"$versionName\"," obj-tbb-arm-linux-androideabi/mobile/android/base/AndroidManifest.xml
 sed -i "s,versionCode=\"[^\"]*\",versionCode=\"$versionCode\"," obj-tbb-arm-linux-androideabi/mobile/android/base/AndroidManifest.xml
 
