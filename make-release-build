@@ -85,7 +85,7 @@ else
     set -x
 fi
 
-built=`ls -1 obj-tbb-*-linux-*/dist/fennec-*.apk`
+built=`ls -1 obj-tbb-*-linux-*/dist/fennec-*-unsigned-unaligned.apk`
 apk="Orfox-$describe.apk"
 cp $built $apk
 
