@@ -7,3 +7,6 @@
 [submodule "external/NetCipher"]
 	path = external/NetCipher
 	url = https://github.com/guardianproject/NetCipher.git
+[submodule "external/tor-browser-settings"]
+	path = external/tor-browser-settings
+	url = https://git.synz.io/synzvato/tor-browser-settings.git
