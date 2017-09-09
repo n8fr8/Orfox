@@ -1,0 +1,100 @@
+#!/bin/bash
+# bash is required because we need bash's printf to guarantee a cross-platform
+# timestamp format.
+
+if [ `dirname $0` != "." ]; then
+    echo "only run this script like ./`basename $0`"
+    exit
+fi
+
+if [ -z $ANDROID_HOME ]; then
+    if [ -e ~/.android/bashrc ]; then
+        . ~/.android/bashrc
+    else
+        echo "ANDROID_HOME must be set!"
+        exit
+    fi
+fi
+
+if [ -z $ANDROID_NDK_HOME ]; then
+    if which ndk-build 2>&1 /dev/null; then
+        ANDROID_NDK_HOME=`which ndk-build |  sed 's,/ndk-build,,'`
+    else
+        echo "ANDROID_NDK_HOME not set and 'ndk-build' not in PATH"
+        exit
+    fi
+fi
+
+export NDK_BASE=${ANDROID_NDK_HOME}
+export SDK_BASE=${ANDROID_SDK_HOME}
+
+set -e
+set -x
+
+# standardize timezone to reduce build differences
+export TZ=UTC
+# run the clock at 5% speed, ant requires a moving clock
+TIMESTAMP=`printf '@%(%Y-%m-%d %H:%M:%S)T x0.05' \
+    $(git log -n1 --format=format:%at)`
+
+git reset --hard
+git clean -fdx
+git submodule foreach --recursive git reset --hard
+git submodule foreach --recursive git clean -fdx
+git submodule sync --recursive
+git submodule foreach --recursive git submodule sync
+git submodule update --init --recursive
+
+# set the mozconfig to be used
+export MOZCONFIG=`pwd`"/external/tor-browser/.mozconfig-orfox-release"
+cp .mozconfig-orfox-release $MOZCONFIG
+cat external/tor-browser/.mozconfig-orfox >> $MOZCONFIG
+
+# Need to add in add-ons before the package step
+cp -r external/orfox-addons/*.xpi external/tor-browser/mobile/android/orfox/distribution/assets/distribution/extensions/
+
+# switch to gecko dev and build
+cd external/tor-browser
+./mach configure
+./mach build
+
+# set the version, the official Mozilla so far has been too hard to figure out...
+
+#52.2.0esr-7.0-1 STABLE!
+export versionName="Fennec-52.2.0esr/TorBrowser-7.0-1/Orfox-1.4-RC-3"
+export versionCode="10"
+sed -i "s,versionName=\"[^\"]*\",versionName=\"$versionName\"," obj-tbb-arm-linux-androideabi/mobile/android/base/AndroidManifest.xml
+sed -i "s,versionCode=\"[^\"]*\",versionCode=\"$versionCode\"," obj-tbb-arm-linux-androideabi/mobile/android/base/AndroidManifest.xml
+
+./mach package
+./mach build-backend -b AndroidEclipse
+
+# make sure we're on a signed tag that matches the version name
+describe=`git describe --always`
+if [ $versionName != $describe ]; then
+    echo "WARNING: building $describe, which is not the latest release ($versionName)"
+else
+    # make a clearer warning above by putting this here
+    set +x
+    echo ""
+    echo ""
+    echo "Checking git tag signature for release build:"
+    git tag -v $versionName
+    echo ""
+    echo ""
+    set -x
+fi
+
+built=`ls -1 obj-tbb-*-linux-*/dist/fennec-*-unsigned-unaligned.apk`
+apk="Orfox-$describe.apk"
+cp $built $apk
+
+if which gpg > /dev/null; then
+    if [ -z "`gpg --list-secret-keys`" ]; then
+        echo "No GPG secret keys found, not signing APK"
+else
+        gpg --detach-sign $apk
+    fi
+else
+    echo "gpg not found, not signing APK"
+fi
