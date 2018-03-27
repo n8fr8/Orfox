@@ -50,9 +50,6 @@ export MOZCONFIG=`pwd`"/external/tor-browser/.mozconfig-orfox-release"
 cp .mozconfig-orfox-release $MOZCONFIG
 cat external/tor-browser/.mozconfig-orfox >> $MOZCONFIG
 
-# Need to add in add-ons before the package step
-cp -r external/orfox-addons/*.xpi external/tor-browser/mobile/android/orfox/distribution/assets/distribution/extensions/
-
 # switch to gecko dev and build
 cd external/tor-browser
 ./mach configure
